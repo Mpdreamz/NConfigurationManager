@@ -9,50 +9,25 @@ using System.Net.NetworkInformation;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
+using System.Web;
 
-namespace NConfigurationManager
+namespace NConfiguration
 {
     public static class NConfigurationManager
     {
         private static object _lock = new object();
-        private static readonly ReaderWriterLock _readWriteLock = new ReaderWriterLock();
-        private static readonly string _rootDirectory;
-        private static readonly string _environmentsFile;
-        private static readonly FileSystemWatcher _watcher;
+        private static ReaderWriterLock _readWriteLock = new ReaderWriterLock();
+        private static string _rootDirectory;
+        private static string _environmentsFile;
+        private static FileSystemWatcher _watcher;
+
+        private static bool Initialized = false;
 
         static NConfigurationManager()
         {
             lock (_lock)
             {
-                var path = Assembly.GetEntryAssembly().Location;
-                while (
-                    !Directory.Exists(Path.Combine(path, "nconfig.environments"))
-                    && Directory.GetDirectoryRoot(path) != path
-                )
-                {
-                    path = Directory.GetParent(path).FullName;
-                }
-                if (Directory.GetDirectoryRoot(path) == path)
-                    throw new ApplicationException("Could not locate parent NConfig.Environments folder");
-                _rootDirectory = Path.Combine(path, "nconfig.environments");
-                _environmentsFile = Path.Combine(_rootDirectory, "environments.config");
-                if (!File.Exists(_environmentsFile))
-                    throw new ApplicationException("Could not locate environments.config file in the NConfig.Environments folder");
-                _watcher = new FileSystemWatcher(_rootDirectory, "*.config");
-
-                _watcher.NotifyFilter = NotifyFilters.LastWrite
-                    | NotifyFilters.Size
-                    | NotifyFilters.Security
-                    | NotifyFilters.FileName
-                    | NotifyFilters.DirectoryName
-                    | NotifyFilters.FileName
-                    | NotifyFilters.Attributes;
-
-                _watcher.Changed += new FileSystemEventHandler(OnChanged);
-                _watcher.Created += new FileSystemEventHandler(OnChanged);
-                _watcher.Deleted += new FileSystemEventHandler(OnChanged);
-                _watcher.Renamed += new RenamedEventHandler(OnRenamed);
-                _watcher.EnableRaisingEvents = true;
+                InitializeIntern();
             }
         }
 
@@ -68,23 +43,67 @@ namespace NConfigurationManager
         {
             Refresh();
         }
+        private static void InitializeIntern()
+        {
+            var path = System.AppDomain.CurrentDomain.BaseDirectory;
+            while (
+                !Directory.Exists(Path.Combine(path, "nconfig.environments"))
+                && Directory.GetDirectoryRoot(path) != path
+            )
+            {
+                path = Directory.GetParent(path).FullName;
+            }
+            if (Directory.GetDirectoryRoot(path) == path)
+                throw new ApplicationException("Could not locate parent NConfig.Environments folder");
+            _rootDirectory = Path.Combine(path, "nconfig.environments");
+            _environmentsFile = Path.Combine(_rootDirectory, "environments.config");
+            if (!File.Exists(_environmentsFile))
+                throw new ApplicationException("Could not locate environments.config file in the NConfig.Environments folder");
+            _watcher = new FileSystemWatcher(_rootDirectory, "*.config");
+
+            _watcher.NotifyFilter = NotifyFilters.LastWrite
+                | NotifyFilters.Size
+                | NotifyFilters.Security
+                | NotifyFilters.FileName
+                | NotifyFilters.DirectoryName
+                | NotifyFilters.FileName
+                | NotifyFilters.Attributes;
+
+            _watcher.Changed += new FileSystemEventHandler(OnChanged);
+            _watcher.Created += new FileSystemEventHandler(OnChanged);
+            _watcher.Deleted += new FileSystemEventHandler(OnChanged);
+            _watcher.Renamed += new RenamedEventHandler(OnRenamed);
+            _watcher.EnableRaisingEvents = true;
+            Initialized = true;
+        }
         private static void Refresh()
         {
             lock (_lock)
             {
+                if (!Initialized)
+                    InitializeIntern();
+                if (!Initialized)
+                    throw new ApplicationException("An unknow error occured while trying to initialize");
+                
                 var environmentConfiguration = GetCurrentEnvironmentConfiguration();
-                var activeConfiguration = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                var path = AppDomain.CurrentDomain.GetData("APP_CONFIG_FILE").ToString();
+                Configuration activeConfiguration = null;
+                if (path.EndsWith("web.config"))
+                    activeConfiguration = ConfigurationManager.OpenExeConfiguration(path);
+                else
+                    activeConfiguration = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 try
                 {
                     _readWriteLock.AcquireWriterLock(1000);
                     var equalAppSettings = HasEqualAppSettingsAndValues(activeConfiguration, environmentConfiguration);
-                    var equalConnectionStrings = HasEqualConnectionStrings(activeConfiguration, environmentConfiguration);
+                    var equalConnectionStrings = HasEqualConnectionStringsAndValues(activeConfiguration, environmentConfiguration);
                     if (!equalAppSettings)
                     { 
                         activeConfiguration.AppSettings.Settings.Clear();
                         foreach (KeyValueConfigurationElement a in environmentConfiguration.AppSettings.Settings)
                         {
                             activeConfiguration.AppSettings.Settings.Add(a.Key, a.Value);
+                            ConfigurationManager.AppSettings[a.Key] = a.Value;
                         }
                     }
                     if (!equalConnectionStrings)
