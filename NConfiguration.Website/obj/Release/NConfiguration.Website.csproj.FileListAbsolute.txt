@@ -1,0 +1,9 @@
+D:\Projects\NConfigurationManager\NConfiguration.Website\bin\NConfiguration.Website.dll
+D:\Projects\NConfigurationManager\NConfiguration.Website\bin\NConfiguration.Website.pdb
+D:\Projects\NConfigurationManager\NConfiguration.Website\bin\EntityFramework.dll
+D:\Projects\NConfigurationManager\NConfiguration.Website\bin\NConfiguration.dll
+D:\Projects\NConfigurationManager\NConfiguration.Website\bin\NConfiguration.pdb
+D:\Projects\NConfigurationManager\NConfiguration.Website\bin\EntityFramework.xml
+D:\Projects\NConfigurationManager\NConfiguration.Website\obj\Release\ResolveAssemblyReference.cache
+D:\Projects\NConfigurationManager\NConfiguration.Website\obj\Release\NConfiguration.Website.dll
+D:\Projects\NConfigurationManager\NConfiguration.Website\obj\Release\NConfiguration.Website.pdb

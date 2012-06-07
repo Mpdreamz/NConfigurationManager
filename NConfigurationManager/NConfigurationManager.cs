@@ -10,6 +10,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Web;
+using System.Web.Configuration;
 
 namespace NConfiguration
 {
@@ -89,7 +90,7 @@ namespace NConfiguration
                 var path = AppDomain.CurrentDomain.GetData("APP_CONFIG_FILE").ToString();
                 Configuration activeConfiguration = null;
                 if (path.EndsWith("web.config"))
-                    activeConfiguration = ConfigurationManager.OpenExeConfiguration(path);
+                    activeConfiguration = WebConfigurationManager.OpenWebConfiguration("~");
                 else
                     activeConfiguration = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
                 try
