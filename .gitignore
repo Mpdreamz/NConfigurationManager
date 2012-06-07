@@ -3,4 +3,6 @@
 /NConfigurationManager.Console/obj
 /NConfigurationManager/bin
 /NConfigurationManager/obj
+bin
+obj
 *.suo

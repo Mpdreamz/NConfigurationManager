@@ -1,9 +1,0 @@
-D:\Projects\NConfigurationManager\NConfiguration.Website\bin\NConfiguration.Website.dll
-D:\Projects\NConfigurationManager\NConfiguration.Website\bin\NConfiguration.Website.pdb
-D:\Projects\NConfigurationManager\NConfiguration.Website\bin\EntityFramework.dll
-D:\Projects\NConfigurationManager\NConfiguration.Website\bin\NConfiguration.dll
-D:\Projects\NConfigurationManager\NConfiguration.Website\bin\NConfiguration.pdb
-D:\Projects\NConfigurationManager\NConfiguration.Website\bin\EntityFramework.xml
-D:\Projects\NConfigurationManager\NConfiguration.Website\obj\Debug\ResolveAssemblyReference.cache
-D:\Projects\NConfigurationManager\NConfiguration.Website\obj\Debug\NConfiguration.Website.dll
-D:\Projects\NConfigurationManager\NConfiguration.Website\obj\Debug\NConfiguration.Website.pdb
