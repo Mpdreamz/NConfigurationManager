@@ -21,8 +21,8 @@ namespace NConfiguration
         private static string _rootDirectory;
         private static string _environmentsFile;
         private static FileSystemWatcher _watcher;
-
         private static bool Initialized = false;
+        private static string _defaultEnvironment = null;
 
         static NConfigurationManager()
         {
@@ -44,6 +44,17 @@ namespace NConfiguration
         {
             Refresh();
         }
+        /// <summary>
+        /// Fall back to the given environment name as suppose to whatever "default" is pointing to.
+        /// </summary>
+        /// <param name="defaultEnvronment"></param>
+        public static void Initialize(string defaultEnvironment)
+        {
+          _defaultEnvironment = defaultEnvironment;
+            Refresh();
+        }
+        
+
         private static void InitializeIntern()
         {
             var path = System.AppDomain.CurrentDomain.BaseDirectory;
@@ -155,8 +166,8 @@ namespace NConfiguration
                 .Where(a => a.AddressFamily == AddressFamily.InterNetwork || a.AddressFamily == AddressFamily.InterNetworkV6)
                 .Select(a => a.ToString())
             );
-
-            var environment = settings["default"].Value;
+            var defEnv = _defaultEnvironment ?? settings["default"].Value;
+            var environment = defEnv;
             foreach (var key in keyCandidates)
             {
                 if (string.IsNullOrWhiteSpace(key) || !keys.Contains(key.ToString()))
@@ -165,9 +176,9 @@ namespace NConfiguration
                 environment = settings[key].Value;
                 break;
             }
-            if (environment != settings["default"].Value)
+            if (environment != defEnv)
             {
-                var defaultConfiguration = OpenConfiguration(Path.Combine(_rootDirectory, settings["default"].Value + ".config"));
+                var defaultConfiguration = OpenConfiguration(Path.Combine(_rootDirectory, defEnv + ".config"));
                 var environmentConfiguration = OpenConfiguration(Path.Combine(_rootDirectory, environment + ".config"));
 
                 var equalAppSettings = HasEqualAppSettings(defaultConfiguration, environmentConfiguration);
