@@ -11,6 +11,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Web;
 using System.Web.Configuration;
+using System.Diagnostics;
 
 namespace NConfiguration
 {
@@ -164,13 +165,13 @@ namespace NConfiguration
             var keyCandidates = new string[] { fqdn, host, domain }.Concat(
                 ipEntry.AddressList
                 .Where(a => a.AddressFamily == AddressFamily.InterNetwork || a.AddressFamily == AddressFamily.InterNetworkV6)
-                .Select(a => a.ToString())
+                .Select(a => a.ToString().ToLowerInvariant())
             );
             var defEnv = _defaultEnvironment ?? settings["default"].Value;
             var environment = defEnv;
             foreach (var key in keyCandidates)
             {
-                if (string.IsNullOrWhiteSpace(key) || !keys.Contains(key.ToString()))
+                if (string.IsNullOrWhiteSpace(key) || !keys.Contains(key.ToString().ToLowerInvariant()))
                     continue;
                 //TODO log match
                 environment = settings[key].Value;
