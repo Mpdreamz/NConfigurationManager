@@ -16,6 +16,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Configuration", "Configurat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NConfiguration.Website", "NConfiguration.Website\NConfiguration.Website.csproj", "{EE1B7583-54AF-4BA5-909D-CE4C8003CDF4}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Demos", "Demos", "{50FEBE2B-8D6C-42E2-8E8F-245BA8130AB9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NConf", "NConf\NConf.csproj", "{FBBA0308-D420-4454-B7F0-5E714AF5F1AE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -56,8 +60,22 @@ Global
 		{EE1B7583-54AF-4BA5-909D-CE4C8003CDF4}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{EE1B7583-54AF-4BA5-909D-CE4C8003CDF4}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{EE1B7583-54AF-4BA5-909D-CE4C8003CDF4}.Release|x86.ActiveCfg = Release|Any CPU
+		{FBBA0308-D420-4454-B7F0-5E714AF5F1AE}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{FBBA0308-D420-4454-B7F0-5E714AF5F1AE}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{FBBA0308-D420-4454-B7F0-5E714AF5F1AE}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{FBBA0308-D420-4454-B7F0-5E714AF5F1AE}.Debug|x86.ActiveCfg = Debug|x86
+		{FBBA0308-D420-4454-B7F0-5E714AF5F1AE}.Debug|x86.Build.0 = Debug|x86
+		{FBBA0308-D420-4454-B7F0-5E714AF5F1AE}.Release|Any CPU.ActiveCfg = Release|x86
+		{FBBA0308-D420-4454-B7F0-5E714AF5F1AE}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{FBBA0308-D420-4454-B7F0-5E714AF5F1AE}.Release|Mixed Platforms.Build.0 = Release|x86
+		{FBBA0308-D420-4454-B7F0-5E714AF5F1AE}.Release|x86.ActiveCfg = Release|x86
+		{FBBA0308-D420-4454-B7F0-5E714AF5F1AE}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{0324AAE1-96B5-4CE4-A1AC-A92F509656FA} = {50FEBE2B-8D6C-42E2-8E8F-245BA8130AB9}
+		{EE1B7583-54AF-4BA5-909D-CE4C8003CDF4} = {50FEBE2B-8D6C-42E2-8E8F-245BA8130AB9}
 	EndGlobalSection
 EndGlobal

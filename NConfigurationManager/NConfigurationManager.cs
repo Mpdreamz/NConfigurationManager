@@ -18,12 +18,14 @@ namespace NConfiguration
     public static class NConfigurationManager
     {
         private static object _lock = new object();
+        private static ReaderWriterLock _setEnvironmentLock = new ReaderWriterLock();
         private static ReaderWriterLock _readWriteLock = new ReaderWriterLock();
         private static string _rootDirectory;
         private static string _environmentsFile;
         private static FileSystemWatcher _watcher;
         private static bool Initialized = false;
         private static string _defaultEnvironment = null;
+        private static string _environment = null;
 
         static NConfigurationManager()
         {
@@ -54,7 +56,14 @@ namespace NConfiguration
           _defaultEnvironment = defaultEnvironment;
             Refresh();
         }
-        
+        public static string GetEnvironment()
+        {
+          var e = string.Empty;
+          _setEnvironmentLock.AcquireReaderLock(1000);
+          e = _environment;
+          _setEnvironmentLock.ReleaseReaderLock();
+          return e;
+        }
 
         private static void InitializeIntern()
         {
@@ -155,27 +164,28 @@ namespace NConfiguration
         {
             var environmentsConfiguration = OpenConfiguration(_environmentsFile);
             var settings = environmentsConfiguration.AppSettings.Settings;
-            var keys = environmentsConfiguration.AppSettings.Settings.AllKeys;
+            var keys = environmentsConfiguration.AppSettings.Settings.AllKeys.ToDictionary(k=>k.ToLowerInvariant(), v=>v);
 
             var ipProperties = IPGlobalProperties.GetIPGlobalProperties();
             var fqdn = string.Format("{0}.{1}", ipProperties.HostName, ipProperties.DomainName);
             var host = ipProperties.HostName;
             var domain = ipProperties.DomainName;
             var ipEntry = Dns.GetHostEntry(host);
-            var keyCandidates = new string[] { fqdn, host, domain }.Concat(
+            var keyCandidates = new List<string> { fqdn, host, domain }.Concat(
                 ipEntry.AddressList
                 .Where(a => a.AddressFamily == AddressFamily.InterNetwork || a.AddressFamily == AddressFamily.InterNetworkV6)
-                .Select(a => a.ToString().ToLowerInvariant())
-            );
+                .Select(a=>a.ToString())
+            ).Select(a => a.ToString().ToLowerInvariant());
             var defEnv = _defaultEnvironment ?? settings["default"].Value;
             var environment = defEnv;
             foreach (var key in keyCandidates)
             {
-                if (string.IsNullOrWhiteSpace(key) || !keys.Contains(key.ToString().ToLowerInvariant()))
-                    continue;
-                //TODO log match
-                environment = settings[key].Value;
-                break;
+              string environmentKey = string.Empty;
+              if (!keys.TryGetValue(key, out environmentKey))
+                continue;
+
+              environment = settings[environmentKey].Value;
+              break;
             }
             if (environment != defEnv)
             {
@@ -190,6 +200,11 @@ namespace NConfiguration
                 if (!equalConnectionStrings)
                     throw new ApplicationException("Could not load environment: '" + environment + "' it's connectionStrings misses or has extra connections");
             }
+
+            _setEnvironmentLock.AcquireWriterLock(1000);
+            _environment = environment;
+            _setEnvironmentLock.ReleaseWriterLock();
+
             return OpenConfiguration(Path.Combine(_rootDirectory, environment + ".config"));
         }
         private static bool HasEqualAppSettings(Configuration configuration, Configuration compareConfiguration)
