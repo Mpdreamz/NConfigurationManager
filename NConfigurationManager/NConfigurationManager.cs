@@ -65,22 +65,46 @@ namespace NConfiguration
           return e;
         }
 
+        private static void FindRootDirectory()
+        {
+          var path = System.AppDomain.CurrentDomain.BaseDirectory;
+          while (
+              (!Directory.Exists(Path.Combine(path, "nconfig.environments"))
+              && !File.Exists(Path.Combine(path, ".nconfig")))
+              && Directory.GetDirectoryRoot(path) != path
+          )
+          {
+            path = Directory.GetParent(path).FullName;
+          }
+          if (File.Exists(Path.Combine(path, ".nconfig")))
+          {
+            var redirPath = File.ReadAllText(Path.Combine(path, ".nconfig"));
+            if (string.IsNullOrEmpty(redirPath))
+            {
+              throw new ApplicationException(string.Format("Found a .config redirect file at {0} but it was empty", path));
+            }
+            redirPath = Path.Combine(path, redirPath);
+            if (!Directory.Exists(redirPath))
+            {
+              throw new ApplicationException(string.Format("Found a .config redirect file at {0} it redirects to non existing folder {1}", path, redirPath));
+            }
+            _rootDirectory = redirPath;
+            return;
+          }
+
+          if (Directory.GetDirectoryRoot(path) == path)
+            throw new ApplicationException("Could not locate parent NConfig.Environments folder");
+          _rootDirectory = Path.Combine(path, "nconfig.environments");
+        }
+
+
         private static void InitializeIntern()
         {
-            var path = System.AppDomain.CurrentDomain.BaseDirectory;
-            while (
-                !Directory.Exists(Path.Combine(path, "nconfig.environments"))
-                && Directory.GetDirectoryRoot(path) != path
-            )
-            {
-                path = Directory.GetParent(path).FullName;
-            }
-            if (Directory.GetDirectoryRoot(path) == path)
-                throw new ApplicationException("Could not locate parent NConfig.Environments folder");
-            _rootDirectory = Path.Combine(path, "nconfig.environments");
+
+            FindRootDirectory(); 
             _environmentsFile = Path.Combine(_rootDirectory, "environments.config");
             if (!File.Exists(_environmentsFile))
-                throw new ApplicationException("Could not locate environments.config file in the NConfig.Environments folder");
+              throw new ApplicationException("Could not locate environments.config file in the NConfig.Environments folder: " + _environmentsFile);
             _watcher = new FileSystemWatcher(_rootDirectory, "*.config");
 
             _watcher.NotifyFilter = NotifyFilters.LastWrite
