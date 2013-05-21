@@ -15,9 +15,9 @@ namespace NConf
 
     static int Main(string[] args)
     {
-      NConfiguration.NConfigurationManager.Initialize();
       if (args == null || !args.Any())
       {
+        NConfiguration.NConfigurationManager.Initialize();
         Console.WriteLine(NConfiguration.NConfigurationManager.GetEnvironment());
       }
       else if (!_validSwitches.Contains(args[0]))
@@ -32,6 +32,7 @@ namespace NConf
           PrintUsage();
           return 1;
         }
+        NConfiguration.NConfigurationManager.Initialize();
         var key = args[1];
         Console.WriteLine(ConfigurationManager.AppSettings[key]);
       }
@@ -42,6 +43,7 @@ namespace NConf
           PrintUsage();
           return 1;
         }
+        NConfiguration.NConfigurationManager.Initialize();
         var key = args[1];
         Console.WriteLine(ConfigurationManager.ConnectionStrings[key].ConnectionString);
       }
