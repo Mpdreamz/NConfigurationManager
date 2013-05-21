@@ -122,6 +122,9 @@ namespace NConfiguration
             _watcher.EnableRaisingEvents = true;
             Initialized = true;
         }
+        
+       
+
         private static void Refresh()
         {
             lock (_lock)
@@ -184,6 +187,74 @@ namespace NConfiguration
         {
             
         }
+
+        /// <summary>
+        /// Validates all the environment configuration files
+        /// </summary>
+        /// <returns>A dictionary of environment name as key with a list of configuration error messages</returns>
+        public static Dictionary<string, IList<string>> ValidateAllConfigurations()
+        {
+          var validationErrors = new Dictionary<string, IList<string>>();
+
+          var formatExtraKey = "{0}.config has extra setting {1} not in {2}.config";
+          var formatMissingKey = "{0}.config misses setting {1} from {2}.config";
+
+          var formatExtraConnectionString = "{0}.config has extra connection {1} not in {2}.config";
+          var formatMissingConnectionString = "{0}.config misses connection {1} from {2}.config";
+
+          var environmentsConfiguration = OpenConfiguration(_environmentsFile);
+          var settings = environmentsConfiguration.AppSettings.Settings;
+          
+          var defEnv = _defaultEnvironment ?? settings["default"].Value;
+          var defaultConfiguration = OpenConfiguration(Path.Combine(_rootDirectory, defEnv + ".config"));
+
+          var defaultConnections = new List<string>();
+          foreach (ConnectionStringSettings k in defaultConfiguration.ConnectionStrings.ConnectionStrings)
+            defaultConnections.Add(k.Name);
+
+
+          var environments = settings.AllKeys.Select(k => settings[k].Value).Distinct();
+          foreach (var environment in environments)
+          {
+            var environmentConfiguration = OpenConfiguration(Path.Combine(_rootDirectory, environment + ".config"));
+            var equalAppSettings = HasEqualAppSettings(defaultConfiguration, environmentConfiguration);
+            var equalConnectionStrings = HasEqualAppSettings(defaultConfiguration, environmentConfiguration);
+            if (equalAppSettings && equalConnectionStrings)
+              continue;
+
+            var errors = new List<string>();
+            if (!equalAppSettings)
+            {
+              
+              foreach (var s in environmentConfiguration.AppSettings.Settings.AllKeys)
+                if (!defaultConfiguration.AppSettings.Settings.AllKeys.Contains(s))
+                  errors.Add(string.Format(formatExtraKey, environment, s, defEnv));
+
+              foreach (var s in defaultConfiguration.AppSettings.Settings.AllKeys)
+                if (!environmentConfiguration.AppSettings.Settings.AllKeys.Contains(s))
+                  errors.Add(string.Format(formatMissingKey, environment, s, defEnv));
+            }
+            if (!equalConnectionStrings)
+            {
+              var environmentConnections = new List<string>();
+              foreach (ConnectionStringSettings k in environmentConfiguration.ConnectionStrings.ConnectionStrings)
+                environmentConnections.Add(k.Name);
+             
+              foreach (var s in environmentConnections)
+                if (!defaultConnections.Contains(s))
+                  errors.Add(string.Format(formatExtraConnectionString, environment, s, defEnv));
+
+              foreach (var s in defaultConnections)
+                if (!environmentConnections.Contains(s))
+                  errors.Add(string.Format(formatMissingConnectionString, environment, s, defEnv));
+            }
+            validationErrors.Add(environment, errors);
+
+          }
+          return validationErrors;
+        }
+
+
         private static Configuration GetCurrentEnvironmentConfiguration()
         {
             var environmentsConfiguration = OpenConfiguration(_environmentsFile);
@@ -220,7 +291,7 @@ namespace NConfiguration
                 if (!equalAppSettings)
                     throw new ApplicationException("Could not load environment: '" + environment + "' it's appSetting misses or has extra keys");
 
-                var equalConnectionStrings = HasEqualAppSettings(defaultConfiguration, environmentConfiguration);
+                var equalConnectionStrings = HasEqualConnectionStrings(defaultConfiguration, environmentConfiguration);
                 if (!equalConnectionStrings)
                     throw new ApplicationException("Could not load environment: '" + environment + "' it's connectionStrings misses or has extra connections");
             }
