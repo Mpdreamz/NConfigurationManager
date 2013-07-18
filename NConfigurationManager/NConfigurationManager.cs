@@ -152,7 +152,7 @@ namespace NConfiguration
                         foreach (KeyValueConfigurationElement a in environmentConfiguration.AppSettings.Settings)
                         {
                             activeConfiguration.AppSettings.Settings.Add(a.Key, a.Value);
-                            ConfigurationManager.AppSettings[a.Key] = a.Value;
+                            //ConfigurationManager.AppSettings[a.Key] = a.Value;
                         }
                     }
                     if (!equalConnectionStrings)
@@ -253,24 +253,44 @@ namespace NConfiguration
           }
           return validationErrors;
         }
-
-
+           
+        public static IEnumerable<string> GetKeyCandidates()
+        {
+            string host = null;
+            var keys = new List<string>();
+            try {
+                var ipProperties = IPGlobalProperties.GetIPGlobalProperties();
+                var fqdn = string.Format("{0}.{1}", ipProperties.HostName, ipProperties.DomainName);
+                host = ipProperties.HostName;
+                var domain = ipProperties.DomainName;
+                keys.Add(fqdn);
+                keys.Add(host);
+                keys.Add(host);
+            }
+            catch {
+                host = System.Environment.MachineName;
+                keys.Add(host);
+            }
+            try
+            {
+            var ipEntry = Dns.GetHostEntry(host);
+            var keyCandidates = keys.
+                Concat(ipEntry.AddressList.
+                       Where(a => a.AddressFamily == AddressFamily.InterNetwork || a.AddressFamily == AddressFamily.InterNetworkV6)
+                       .Select(a => a.ToString())
+                ).Select(a => a.ToString().ToLowerInvariant());
+            return keyCandidates;
+            }
+            catch { return keys; }
+        }
         private static Configuration GetCurrentEnvironmentConfiguration()
         {
             var environmentsConfiguration = OpenConfiguration(_environmentsFile);
             var settings = environmentsConfiguration.AppSettings.Settings;
             var keys = environmentsConfiguration.AppSettings.Settings.AllKeys.ToDictionary(k=>k.ToLowerInvariant(), v=>v);
 
-            var ipProperties = IPGlobalProperties.GetIPGlobalProperties();
-            var fqdn = string.Format("{0}.{1}", ipProperties.HostName, ipProperties.DomainName);
-            var host = ipProperties.HostName;
-            var domain = ipProperties.DomainName;
-            var ipEntry = Dns.GetHostEntry(host);
-            var keyCandidates = new List<string> { fqdn, host, domain }.Concat(
-                ipEntry.AddressList
-                .Where(a => a.AddressFamily == AddressFamily.InterNetwork || a.AddressFamily == AddressFamily.InterNetworkV6)
-                .Select(a=>a.ToString())
-            ).Select(a => a.ToString().ToLowerInvariant());
+            var keyCandidates = GetKeyCandidates();
+
             var defEnv = _defaultEnvironment ?? settings["default"].Value;
             var environment = defEnv;
             foreach (var key in keyCandidates)

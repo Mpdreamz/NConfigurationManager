@@ -10,7 +10,7 @@ namespace NConf
   {
     private static readonly string[] _validSwitches = new string[]
     {
-      "-appSetting", "-a", "-connectionString", "-c", "-validate", "-v"
+      "-appSetting", "-a", "-connectionString", "-c", "-validate", "-v", "-list","-l"
     };
 
     static int Main(string[] args)
@@ -47,6 +47,21 @@ namespace NConf
         var key = args[1];
         Console.WriteLine(ConfigurationManager.ConnectionStrings[key].ConnectionString);
       }
+      else if (args[0].StartsWith("-l"))
+      {
+        if (args.Length >= 2)
+        {
+            PrintUsage();
+            return 1;
+        }
+                Console.WriteLine("Key candidates for this PC");
+                var candidates = NConfiguration.NConfigurationManager.GetKeyCandidates();
+                foreach(var key in candidates) {
+                    Console.WriteLine("\t - {0}", key);
+                
+                }
+       }
+
       else if (args[0].StartsWith("-v"))
       {
         var validationResults = NConfiguration.NConfigurationManager.ValidateAllConfigurations();
@@ -83,6 +98,7 @@ namespace NConf
       Console.Error.WriteLine("\t: -appSetting (-a) [KEY]: prints the appseting value for [KEY]");
       Console.Error.WriteLine("\t: -connectionString (-c) [KEY]: prints the connectionString value for [KEY]");
       Console.Error.WriteLine("\t: -validate (-v): validate all the environments");
+      Console.Error.WriteLine("\t: -list (-l): list all the keys available to identify this pc");
     }
   }
 }
