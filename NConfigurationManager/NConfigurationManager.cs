@@ -26,6 +26,7 @@ namespace NConfiguration
         private static bool Initialized = false;
         private static string _defaultEnvironment = null;
         private static string _environment = null;
+        private static Configuration _currentConfig = null;
 
         static NConfigurationManager()
         {
@@ -122,8 +123,34 @@ namespace NConfiguration
             _watcher.EnableRaisingEvents = true;
             Initialized = true;
         }
-        
-       
+
+        /// <summary>
+        /// Mono has a bug so on mono projects GetAppSetting is mandatory
+        /// Gets the app setting.  
+        /// https://bugzilla.novell.com/show_bug.cgi?id=545588
+        /// </summary>
+        /// <returns>The app setting.</returns>
+        /// <param name="key">Key.</param>
+        public static string GetAppSetting(string key) {
+            if (_currentConfig == null)
+                return null;
+
+            var s = _currentConfig.AppSettings.Settings[key];
+            return s != null ? s.Value : string.Empty;
+        }
+        /// <summary>
+        /// Mono has a bug so on mono projects GetConnectionString is mandatory
+        /// https://bugzilla.novell.com/show_bug.cgi?id=545588
+        /// </summary>
+        /// <returns>The app setting.</returns>
+        /// <param name="key">Key.</param>
+        public static string GetConnectionString(string key) {
+            if (_currentConfig == null)
+                return null;
+
+            var s = _currentConfig.ConnectionStrings.ConnectionStrings[key];
+            return s != null ? s.ConnectionString : string.Empty;
+        }
 
         private static void Refresh()
         {
@@ -135,6 +162,7 @@ namespace NConfiguration
                     throw new ApplicationException("An unknow error occured while trying to initialize");
                 
                 var environmentConfiguration = GetCurrentEnvironmentConfiguration();
+                _currentConfig = environmentConfiguration;
                 var path = AppDomain.CurrentDomain.GetData("APP_CONFIG_FILE").ToString();
                 Configuration activeConfiguration = null;
                 if (path.EndsWith("web.config"))
@@ -152,7 +180,6 @@ namespace NConfiguration
                         foreach (KeyValueConfigurationElement a in environmentConfiguration.AppSettings.Settings)
                         {
                             activeConfiguration.AppSettings.Settings.Add(a.Key, a.Value);
-                            //ConfigurationManager.AppSettings[a.Key] = a.Value;
                         }
                     }
                     if (!equalConnectionStrings)
@@ -170,6 +197,7 @@ namespace NConfiguration
                         activeConfiguration.Save(ConfigurationSaveMode.Full);
                         ConfigurationManager.RefreshSection("appSettings");
                         ConfigurationManager.RefreshSection("connectionStrings");
+
                     }
                 }
                 catch (Exception e)
@@ -283,6 +311,7 @@ namespace NConfiguration
             }
             catch { return keys; }
         }
+    
         private static Configuration GetCurrentEnvironmentConfiguration()
         {
             var environmentsConfiguration = OpenConfiguration(_environmentsFile);
@@ -322,6 +351,7 @@ namespace NConfiguration
 
             return OpenConfiguration(Path.Combine(_rootDirectory, environment + ".config"));
         }
+
         private static bool HasEqualAppSettings(Configuration configuration, Configuration compareConfiguration)
         {
             var configSettings = configuration.AppSettings.Settings.AllKeys;
@@ -330,6 +360,7 @@ namespace NConfiguration
                         && configSettings.Except(compareSettings).Count() == 0;
             return equalAppSettings;
         }
+
         private static bool HasEqualConnectionStrings(Configuration configuration, Configuration compareConfiguration)
         {
             var configConnections = configuration.ConnectionStrings.ConnectionStrings;
@@ -347,6 +378,7 @@ namespace NConfiguration
 
             return equalConnectionStrings;
         }
+
         private static bool HasEqualAppSettingsAndValues(Configuration configuration, Configuration compareConfiguration)
         {
             if (!HasEqualAppSettings(configuration, compareConfiguration))
@@ -361,6 +393,7 @@ namespace NConfiguration
             }
             return true;
         }
+ 
         private static bool HasEqualConnectionStringsAndValues(Configuration configuration, Configuration compareConfiguration)
         {
             if (!HasEqualConnectionStrings(configuration, compareConfiguration))

@@ -34,7 +34,7 @@ namespace NConf
         }
         NConfiguration.NConfigurationManager.Initialize();
         var key = args[1];
-        Console.WriteLine(ConfigurationManager.AppSettings[key]);
+                Console.WriteLine(NConfiguration.NConfigurationManager.GetAppSetting(key));
       }
       else if (args[0].StartsWith("-c"))
       {
@@ -45,7 +45,7 @@ namespace NConf
         }
         NConfiguration.NConfigurationManager.Initialize();
         var key = args[1];
-        Console.WriteLine(ConfigurationManager.ConnectionStrings[key].ConnectionString);
+                Console.WriteLine(NConfiguration.NConfigurationManager.GetConnectionString(key));
       }
       else if (args[0].StartsWith("-l"))
       {
