@@ -36,6 +36,8 @@ namespace NConfiguration
             }
         }
 
+		public static string RootDirectory { get { return _rootDirectory;  } }
+
         private static void OnChanged(object sender, FileSystemEventArgs e)
         {
             Refresh();
