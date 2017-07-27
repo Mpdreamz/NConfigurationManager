@@ -86,7 +86,7 @@ namespace NConfiguration
             {
               throw new ApplicationException(string.Format("Found a .config redirect file at {0} but it was empty", path));
             }
-            redirPath = Path.Combine(path, redirPath);
+            redirPath = Path.GetFullPath(Path.Combine(path, redirPath));
             if (!Directory.Exists(redirPath))
             {
               throw new ApplicationException(string.Format("Found a .config redirect file at {0} it redirects to non existing folder {1}", path, redirPath));
